@@ -1,0 +1,19 @@
+# Example branch pairs configuration
+# Format: from_branch:to_branch or from_branch-to_branch
+# Lines starting with # are ignored
+
+# Development to other branches
+development:build
+development:master
+development:preprod
+
+# Preprod to master
+preprod:master
+
+# Feature branches (examples)
+# feature/new-ui:development
+# feature/api-update:development
+
+# Hotfix branches (examples)
+# hotfix/security-patch:master
+# hotfix/security-patch:development

@@ -385,6 +385,8 @@ content_before = {repr(change.content_before or '')}
 content_after = {repr(change.content_after or '')}
 
 # Create unified diff
+content_before = content_before.replace(f"\\r\\n", f"\\n").replace(f"\\r", f"\\n")
+content_after = content_after.replace(f"\\r\\n", f"\\n").replace(f"\\r", f"\\n")
 lines_before = content_before.splitlines(keepends=True)
 lines_after = content_after.splitlines(keepends=True)
 

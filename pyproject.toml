@@ -43,7 +43,6 @@ dev = [
 ]
 
 [project.scripts]
-git-compare = "git_branch_comparison.cli:main"
 git-branch-compare = "git_branch_comparison.cli:main"
 gbc = "git_branch_comparison.cli:main"
 

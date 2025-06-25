@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Main entry point for Git Branch Comparison Tool
+Command-line interface for Git Branch Comparison Tool
 """
 
 import argparse
@@ -15,8 +15,8 @@ if sys.platform == 'win32':
     sys.stdout = codecs.getwriter('utf-8')(sys.stdout.buffer, 'strict')
     sys.stderr = codecs.getwriter('utf-8')(sys.stderr.buffer, 'strict')
 
-from git_comparator import GitBranchComparator
-from report_generator import NotebookReportGenerator
+from .git_comparator import GitComparator
+from .report_generator import ReportGenerator
 
 
 def parse_arguments():
@@ -27,16 +27,16 @@ def parse_arguments():
         epilog="""
 Examples:
   # Compare specific branch pairs
-  python main.py --pairs development:build development:master
+  git-compare --pairs development:build development:master
   
   # Use a configuration file
-  python main.py --config branch_pairs.txt
+  git-compare --config branch_pairs.txt
   
   # Specify output location
-  python main.py --pairs development:master --output ./reports/comparison.ipynb
+  git-compare --pairs development:master --output ./reports/comparison.ipynb
   
   # Compare in both directions
-  python main.py --pairs development:master --bidirectional
+  git-compare --pairs development:master --bidirectional
         """
     )
     
@@ -75,6 +75,12 @@ Examples:
         help='Skip pulling latest changes from remote'
     )
     
+    parser.add_argument(
+        '--version',
+        action='version',
+        version='git-branch-comparison 1.0.0'
+    )
+    
     return parser.parse_args()
 
 
@@ -82,16 +88,25 @@ def load_branch_pairs(config_file: str) -> List[Tuple[str, str]]:
     """Load branch pairs from configuration file"""
     pairs = []
     
-    with open(config_file, 'r') as f:
-        for line in f:
-            line = line.strip()
-            if line and not line.startswith('#'):
-                if ':' in line:
-                    from_branch, to_branch = line.split(':', 1)
-                    pairs.append((from_branch.strip(), to_branch.strip()))
-                elif '-' in line:
-                    from_branch, to_branch = line.split('-', 1)
-                    pairs.append((from_branch.strip(), to_branch.strip()))
+    try:
+        with open(config_file, 'r') as f:
+            for line_num, line in enumerate(f, 1):
+                line = line.strip()
+                if line and not line.startswith('#'):
+                    if ':' in line:
+                        from_branch, to_branch = line.split(':', 1)
+                        pairs.append((from_branch.strip(), to_branch.strip()))
+                    elif '-' in line:
+                        from_branch, to_branch = line.split('-', 1)
+                        pairs.append((from_branch.strip(), to_branch.strip()))
+                    else:
+                        print(f"Warning: Invalid format on line {line_num}: {line}")
+    except FileNotFoundError:
+        print(f"Error: Configuration file not found: {config_file}")
+        sys.exit(1)
+    except Exception as e:
+        print(f"Error reading configuration file: {e}")
+        sys.exit(1)
     
     return pairs
 
@@ -124,14 +139,20 @@ def main():
                 print(f"Invalid pair format: {pair} (expected 'from:to')")
                 sys.exit(1)
     else:
-        # Default pairs if none specified
-        print("No branch pairs specified, using defaults")
-        branch_pairs = [
-            ('development', 'build'),
-            ('development', 'master'),
-            ('development', 'preprod'),
-            ('preprod', 'master')
-        ]
+        # Check for default config file
+        default_config = Path('config.txt')
+        if default_config.exists():
+            print("Using default configuration file: config.txt")
+            branch_pairs = load_branch_pairs('config.txt')
+        else:
+            # Default pairs if none specified
+            print("No branch pairs specified, using defaults")
+            branch_pairs = [
+                ('development', 'build'),
+                ('development', 'master'),
+                ('development', 'preprod'),
+                ('preprod', 'master')
+            ]
     
     # Expand bidirectional if requested
     if args.bidirectional:
@@ -143,7 +164,7 @@ def main():
     
     # Initialize comparator
     try:
-        comparator = GitBranchComparator(args.repo, no_pull=args.no_pull)
+        comparator = GitComparator(args.repo, no_pull=args.no_pull)
     except Exception as e:
         print(f"Error initializing repository: {e}")
         sys.exit(1)
@@ -179,7 +200,7 @@ def main():
     print("Generating report...")
 
     # Ensure output directory exists
-    if (args.output == ''):
+    if args.output == '':
         output_path = Path(f"{Path(args.repo).name}_comparison_report.ipynb")
     else:
         output_path = Path(args.output)
@@ -187,7 +208,7 @@ def main():
     output_path.parent.mkdir(parents=True, exist_ok=True)
     
     # Generate notebook
-    generator = NotebookReportGenerator()
+    generator = ReportGenerator()
     generator.generate_report(comparisons, str(output_path))
     
     print(f"\nReport successfully generated: {output_path}")

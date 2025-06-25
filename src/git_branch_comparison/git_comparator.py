@@ -5,11 +5,11 @@ Git operations and branch comparison logic
 from typing import List
 from git import Repo, GitCommandError
 
-from models import BranchComparison, FileChange
-from analyzers import FileAnalyzerFactory
+from .models import BranchComparison, FileChange
+from .analyzers import FileAnalyzerFactory
 
 
-class GitBranchComparator:
+class GitComparator:
     """Main class for branch comparison"""
     
     def __init__(self, repo_path: str = '.', no_pull: bool = False):

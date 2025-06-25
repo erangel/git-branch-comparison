@@ -11,7 +11,7 @@ import xml.etree.ElementTree as ET
 from xml.parsers.expat import ExpatError
 import yaml
 
-from models import FileChange
+from .models import FileChange
 
 
 class BaseAnalyzer(ABC):

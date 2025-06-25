@@ -8,10 +8,10 @@ import json
 
 import nbformat as nbf
 
-from models import BranchComparison, FileChange
+from .models import BranchComparison, FileChange
 
 
-class NotebookReportGenerator:
+class ReportGenerator:
     """Generate Jupyter notebook reports using only Markdown"""
     
     def __init__(self):
